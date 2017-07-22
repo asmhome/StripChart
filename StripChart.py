@@ -31,17 +31,13 @@ refreshrate = dinc/4  #every 1/2 second
 zuum = 100
 
 
-
-
-
 #.....................Display Control Functions call by Buttons.............
 #rewind data function called by rewind button
 def rewind():
     global dmax
-    global displaymax
-    global displaymin
-    global chartwidth
     global displayinc
+    global displaymin
+    global charatwidth
     displayinc = 0
     displaymin = 0
     if dmax>chartwidth:
@@ -156,10 +152,7 @@ def jumptof(en):
     except ValueError:
         print "Not a float"
 
-
-    
-    
-    
+        
 
 
 #------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----------------------------
@@ -178,13 +171,13 @@ with open('ChannelNames.txt', 'r') as namesfile:
     channeldata = [[0 for x in range(datalimits)] for y in range(numchannel)]
 #--------------------------------------------------------------------------------------------
 
-
+#array of zeros used to hold min & max channel data with TOF
 minchannel = [0 for x in range(numchannel)]
 tminchannel = [0 for x in range(numchannel)]
 maxchannel = [0 for x in range(numchannel)]
 tmaxchannel = [0 for x in range(numchannel)]
 
-#array of zeros used to hold min & max channel data with TOF
+#pre-set min max values
 for i in range(0,numchannel):    
     minchannel[i] = 1000000.0
     maxchannel[i] = -1000000.0
@@ -194,7 +187,7 @@ for i in range(0,numchannel):
 #..................Define and open socket..................
 TCP_IP = '127.0.0.1'
 TCP_PORT = 8889
-BUFFER_SIZE = 52  # Change to match bytes in each data package
+BUFFER_SIZE = 4*(numchannel+1)  # Change to match bytes in each data package
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
 s.listen(1)
@@ -208,65 +201,71 @@ root = Tk()
 root.configure(background=bgkolor, width = 2000)
 
 #set title
-root.title('Realtime Data')
+root.title('Strip Chart')
 
+checks = {}
+for i in range(0,numchannel):
+    checks[names[i]]='1'
+   
+#define first frame for radio buttons
+row1 = Frame(root,height = 2, width = 4, background=bgkolor)
+row1.pack()
 
+for cname in names:
+    checks[cname] = Variable()
+    checks[cname].set('1')
+    c = Checkbutton(row1, text=cname, variable=checks[cname],font=("Arial",9))
+    c.pack(side ='left')
 
-#define first frame for zoom buttons
-firstrow = Frame(root,height = 2, width = 4, background=bgkolor)
-firstrow.pack()
+#define second frame for zoom buttons
+row2 = Frame(root,height = 2, width = 4, background=bgkolor)
+row2.pack()
 
 #create zoom in button
-zoomb = Button(firstrow, text="->In<-", command=zoom)
+zoomb = Button(row2, text="->In<-", command=zoom,font=("Arial",9))
 #place zoom in button
 zoomb.pack(side = 'left', fill='both', expand=True, padx=4)
 #create zoom out button
-zoomb = Button(firstrow, text="<-Out->", command=zoomout)
+zoomb = Button(row2, text="<-Out->", command=zoomout,font=("Arial",9))
 #place zoom out button
 zoomb.pack(side = 'left',fill='both', expand=True, padx=4)
 #create zoom extents button
-extentsb = Button(firstrow, text="|<100%>|", command=extents)
+extentsb = Button(row2, text="|<100%>|", command=extents,font=("Arial",9))
 #place zoom extents button
 extentsb.pack(side = 'left',fill='both', expand=True, padx=4)
 
-#define second frame for controls buttons
-secondrow = Frame(root,height = 2, width = 4, background=bgkolor)
-secondrow.pack()
+#define third frame for controls buttons
+row3 = Frame(root,height = 2, width = 4, background=bgkolor)
+row3.pack()
 
 #create and place rewind button
-rewindb = Button(secondrow, text="|<", command=rewind)
+rewindb = Button(row3, text="|<", command=rewind,font=("Arial",9))
 rewindb.pack(side = 'left')
 #create and place fast backward button
-fbackb = Button(secondrow, text="<<", command=fback)
+fbackb = Button(row3, text="<<", command=fback,font=("Arial",9))
 fbackb.pack(side = 'left')
 #create and place backward button
-backb = Button(secondrow, text="<-", command=back)
+backb = Button(row3, text="<-", command=back,font=("Arial",9))
 backb.pack(side = 'left')
 #create and place stop button
-stopb = Button(secondrow, text="STOP", command=stop)
+stopb = Button(row3, text="STOP", command=stop,font=("Arial",9))
 stopb.pack(side = 'left')
 #create and place forward button
-forwardb = Button(secondrow, text="->", command=forward)
+forwardb = Button(row3, text="->", command=forward,font=("Arial",9))
 forwardb.pack(side = 'left')
 #create and place fast forward button
-fforwardb = Button(secondrow, text=">>", command=fforward)
+fforwardb = Button(row3, text=">>", command=fforward,font=("Arial",9))
 fforwardb.pack(side = 'left')
 #create and place skip to end button
-skipendb = Button(secondrow, text=">|", command=skipend)
+skipendb = Button(row3, text=">|", command=skipend,font=("Arial",9))
 skipendb.pack(side = 'left')
-
-#define third fram to jump data
-
-thirdrow = Frame(root,height = 2, width = 4, background=bgkolor)
-thirdrow.pack()
-
-jumplabel = Label(thirdrow, text = "Jump TOF: ")
+#create and place Jump to input box
+jumplabel = Label(row3, text = "Jump TOF: ",font=("Arial",9))
 jumplabel.pack(side = 'left')
-
-entry = Entry(thirdrow, width = 10)
+entry = Entry(row3, width = 10,font=("Arial",9))
 entry.pack(side = 'left')
-
 entry.bind('<Return>', jumptof)
+
 
 
 #set text box size
@@ -286,8 +285,6 @@ fig.set_size_inches(9, 6, forward=True)
 fig.canvas.set_window_title('Telemetry')
 #add primary y axis to chart
 ax1 = fig.add_subplot(1,1,1, axisbg=bgkolor)
-#add secondary y axis to chart
-ax2 = ax1.twinx()
 
 
 
@@ -318,9 +315,7 @@ def animate(i):
     global zuum
     global numchannel
     global dcount
-            
 
-    
     #get next "dinc" data points
     if dcount < datalimits:
         for i in range(0,dinc):
@@ -364,7 +359,7 @@ def animate(i):
 
     #Update text window
     #clear text window for next data set to be displayed
-    btext.delete(1.0, END)    
+    btext.delete('1.0', END)    
 
     #show TOF
     wtext = "Realtime TOF: "+str(round(tmax,2))+' msec \n'
@@ -376,69 +371,59 @@ def animate(i):
 
     
     for i in range(0,numchannel):
-        wtext = names[i]+':\n'
-        btext.insert(INSERT, wtext)
-        tmaxstr =''
-        tmaxstr = str(round(tmaxchannel[i],2))
-        maxstr = ''
-        maxstr = str(round(maxchannel[i],2))
-        wtext = 'Max: '+ maxstr +' TOF: '+ tmaxstr+'\n'
-        btext.insert(INSERT, wtext)
-        tminstr = ''
-        tminstr = str(round(tminchannel[i],2))
-        minstr = ''
-        minstr = str(round(minchannel[i],2))
-        wtext = 'Min: '+ minstr +' TOF: '+ tminstr+'\n'
-        btext.insert(INSERT, wtext)
+        if checks[names[i]].get()=='1':
+            wtext = names[i]+':\n'
+            btext.insert(INSERT, wtext)
+            tmaxstr =''
+            tmaxstr = str(round(tmaxchannel[i],2))
+            maxstr = ''
+            maxstr = str(round(maxchannel[i],2))
+            wtext = 'Max: '+ maxstr +' TOF: '+ tmaxstr+'\n'
+            btext.insert(INSERT, wtext)
+            tminstr = ''
+            tminstr = str(round(tminchannel[i],2))
+            minstr = ''
+            minstr = str(round(minchannel[i],2))
+            wtext = 'Min: '+ minstr +' TOF: '+ tminstr+'\n'
+            btext.insert(INSERT, wtext)
 
     #update box display        
     root.update()
      
     #Update chart
     ax1.clear()
-    ax2.clear()
+    #ax2.clear()
     if displaymax >= chartwidth:
             tplot = tdata[displaymin:displaymax]
-            for k in range(0, 4):
-                    channel = channeldata[k][displaymin:displaymax]
-                    #first 4 channels go to secondary axis ax2
-                    #....final version can not be hard coded like this
-                    ax2.plot(tplot,channel, label = names[k],linestyle = ':')
-            for l in range(4, numchannel):
+            for l in range(0, numchannel):
+                if checks[names[l]].get()=='1':
                     channel = channeldata[l][displaymin:displaymax]
-                    #remaining channel go to primary axis
-                    ax1.plot(tplot,channel, label = names[l])        
+                    ax1.plot(tplot,channel, label = names[l])
+ 
     else:
             #special case if data recieved is less than full chart limits
             tplot = tdata[0:displaymax]
-            for k in range(0, 4):
-                    channel = channeldata[k][0:displaymax]
-                    #first 4 channels go to secondary axis ax2
-                    #....final version can not be hard coded like this
-                    ax2.plot(tplot,channel, label = names[k], linestyle = ':')
-            for l in range(4, numchannel):
+            for l in range(0, numchannel):
+                if checks[names[l]].get()=='1':
                     channel = channeldata[l][0:displaymax]
-                    #remaining channel go to primary axis
-                    ax1.plot(tplot,channel, label = names[l])        
-    #set up primary axis legend                
+                    ax1.plot(tplot,channel, label = names[l])
+       
+    #set up y axis legend                
     handles, labels = ax1.get_legend_handles_labels()
-    #set primary axis legend location and font size
+    #set legend location and font size
     ax1.legend(loc=3, shadow=True, fontsize='xx-small')
-    #set up secondary axis legend
-    handles, labels = ax2.get_legend_handles_labels()
-    #set seconday axis legend location and font
-    ax2.legend(loc=1, shadow=True, fontsize='xx-small')
+
     #set chart title and fontsize
     plt.title('Realtime Data', fontsize = "small")
     #set axis label font sizes
     ax1.tick_params(labelsize='xx-small')
-    ax2.tick_params(labelsize='xx-small')
+    #ax2.tick_params(labelsize='xx-small')
 
     ax1.yaxis.grid(color='black', linestyle='dashed')
     ax1.xaxis.grid(color='black', linestyle='dashed')
 
-    #label each vertical axis
-    ax2.set_ylabel('Volts')
+    #label each axis
+
     ax1.set_ylabel('IMU Data')
     ax1.set_xlabel('TOF msec')
 
