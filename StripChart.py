@@ -7,10 +7,14 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 import socket
 import struct
+import time
 
-#timescale = 0.000256 #seconds
+#End of Data Flag - Set to 0, if Set to 1 = No More Data Coming
+eodflag = '0'
+timescale = 0.000256 #seconds
+datafreq = int(round(1/timescale,-3))
 #initialchartwidth is number of data sets displayed on the chart
-initialchartwidth = 12000  #approximately 3 seconds of data 3*round(1/timescale,-3)  
+initialchartwidth = 3*datafreq  #approximately 3 seconds of data 3*round(1/timescale,-3)  
 #chartwith is number of data set display after zooming
 chartwidth = initialchartwidth
 #limit of data set that can be received
@@ -20,11 +24,11 @@ tdata = [0 for x in range(datalimits)]
 
 
 #displayinc is increment of number of points display moves each animation
-displayinc = initialchartwidth/6
+displayinc = int(initialchartwidth/6)
 #startdisplayinc holds original value of displayinc
 startdisplayinc = displayinc
 #dinc is number of data points read each animation step
-dinc = 2000  #approx 1/2 second of data or round(1/timescale,-3)/2
+dinc = int(datafreq/2)  #approx 1/2 second of data or round(1/timescale,-3)/2
 #refreshrate controls rate of animation in milliseconds
 refreshrate = dinc/4  #every 1/2 second
 #zuum is percent of chart zoom
@@ -37,10 +41,11 @@ def rewind():
     global dmax
     global displayinc
     global displaymin
-    global charatwidth
+    global chartwidth
+    global displaymax
     displayinc = 0
     displaymin = 0
-    if dmax>chartwidth:
+    if dmax > chartwidth:
         displaymax = chartwidth
     else:
         displaymax = dmax
@@ -222,15 +227,15 @@ row2 = Frame(root,height = 2, width = 4, background=bgkolor)
 row2.pack()
 
 #create zoom in button
-zoomb = Button(row2, text="->In<-", command=zoom,font=("Arial",9))
+zoomb = Button(row2, text="->In<-", command=zoom, font=("Arial",9))
 #place zoom in button
 zoomb.pack(side = 'left', fill='both', expand=True, padx=4)
 #create zoom out button
-zoomb = Button(row2, text="<-Out->", command=zoomout,font=("Arial",9))
+zoomb = Button(row2, text="<-Out->", command=zoomout, font=("Arial",9))
 #place zoom out button
 zoomb.pack(side = 'left',fill='both', expand=True, padx=4)
 #create zoom extents button
-extentsb = Button(row2, text="|<100%>|", command=extents,font=("Arial",9))
+extentsb = Button(row2, text="|<100%>|", command=extents, font=("Arial",9))
 #place zoom extents button
 extentsb.pack(side = 'left',fill='both', expand=True, padx=4)
 
@@ -239,30 +244,30 @@ row3 = Frame(root,height = 2, width = 4, background=bgkolor)
 row3.pack()
 
 #create and place rewind button
-rewindb = Button(row3, text="|<", command=rewind,font=("Arial",9))
+rewindb = Button(row3, text="|<", command=rewind, font=("Arial",9))
 rewindb.pack(side = 'left')
 #create and place fast backward button
-fbackb = Button(row3, text="<<", command=fback,font=("Arial",9))
+fbackb = Button(row3, text="<<", command=fback, font=("Arial",9))
 fbackb.pack(side = 'left')
 #create and place backward button
-backb = Button(row3, text="<-", command=back,font=("Arial",9))
+backb = Button(row3, text="<-", command=back, font=("Arial",9))
 backb.pack(side = 'left')
 #create and place stop button
-stopb = Button(row3, text="STOP", command=stop,font=("Arial",9))
+stopb = Button(row3, text="STOP", command=stop, font=("Arial",9))
 stopb.pack(side = 'left')
 #create and place forward button
-forwardb = Button(row3, text="->", command=forward,font=("Arial",9))
+forwardb = Button(row3, text="->", command=forward, font=("Arial",9))
 forwardb.pack(side = 'left')
 #create and place fast forward button
-fforwardb = Button(row3, text=">>", command=fforward,font=("Arial",9))
+fforwardb = Button(row3, text=">>", command=fforward, font=("Arial",9))
 fforwardb.pack(side = 'left')
 #create and place skip to end button
-skipendb = Button(row3, text=">|", command=skipend,font=("Arial",9))
+skipendb = Button(row3, text=">|", command=skipend, font=("Arial",9))
 skipendb.pack(side = 'left')
 #create and place Jump to input box
-jumplabel = Label(row3, text = "Jump TOF: ",font=("Arial",9))
+jumplabel = Label(row3, text = "Jump TOF: ", font=("Arial",9))
 jumplabel.pack(side = 'left')
-entry = Entry(row3, width = 10,font=("Arial",9))
+entry = Entry(row3, width = 10, font=("Arial",9))
 entry.pack(side = 'left')
 entry.bind('<Return>', jumptof)
 
@@ -280,7 +285,7 @@ chartcanvas = Canvas(root, width=600, height=400, background =bgkolor)
 chartcanvas.pack(side = 'left')
 #........................define figure for chart.....................   
 fig = plt.figure(facecolor = bgkolor)
-fig.set_size_inches(9, 6, forward=True)
+fig.set_size_inches(11, 8, forward=True)
 #set chart title
 fig.canvas.set_window_title('Telemetry')
 #add primary y axis to chart
@@ -315,20 +320,27 @@ def animate(i):
     global zuum
     global numchannel
     global dcount
+    global eodflag
 
     #get next "dinc" data points
-    if dcount < datalimits:
+    #test for end of data flag
+    if eodflag != '1':
         for i in range(0,dinc):
             data = conn.recv(BUFFER_SIZE)
+            #no more data coming, shut down socket and data recieve loop
+            if not data:
+                eodflag = '1'
+                s.close()
+                dinc = 0
+                print 'eod recieved'
+                break
             num = numchannel+1
             packet = struct.unpack('f'*num,data)
-           
             tdata[dcount+i] = packet[0]
             tmax =  tdata[dcount+i]
             dmax = dcount+i
             for n in range(0,numchannel):
                 channeldata [n][dcount+i] = packet[n+1]
-                
                 if channeldata[n][dcount+i] < minchannel[n]:
                     minchannel[n] = channeldata[n][dcount+i]
                     tminchannel[n] = tdata[dcount+i]                    
@@ -337,12 +349,12 @@ def animate(i):
                         maxchannel[n] = channeldata[n][dcount+i]
                         tmaxchannel[n] = tdata[dcount+i]
             conn.send(str(tmax))  
-        dcount = dcount + dinc
-    
+    dcount = dcount + dinc
+
     
     #move displayinc frames.  Note displayinc can be negative
     displaymax = displaymax + displayinc
-
+    
     #check display values are valid    
     if displaymax>dmax:
         displayinc = int(startdisplayinc*100/zuum)
@@ -386,6 +398,11 @@ def animate(i):
             minstr = str(round(minchannel[i],2))
             wtext = 'Min: '+ minstr +' TOF: '+ tminstr+'\n'
             btext.insert(INSERT, wtext)
+    if eodflag == '1':
+        #Show EOD  
+        wtext = '>>>>REALTIME DATA ENDED<<<<<\n'
+        btext.insert(INSERT, wtext)
+    
 
     #update box display        
     root.update()
@@ -395,18 +412,18 @@ def animate(i):
     #ax2.clear()
     if displaymax >= chartwidth:
             tplot = tdata[displaymin:displaymax]
-            for l in range(0, numchannel):
-                if checks[names[l]].get()=='1':
-                    channel = channeldata[l][displaymin:displaymax]
-                    ax1.plot(tplot,channel, label = names[l])
+            for i in range(0, numchannel):
+                if checks[names[i]].get()=='1':
+                    channel = channeldata[i][displaymin:displaymax]
+                    ax1.plot(tplot,channel, label = names[i])
  
     else:
-            #special case if data recieved is less than full chart limits
+            #special case if data recieved is less than chartwidth
             tplot = tdata[0:displaymax]
-            for l in range(0, numchannel):
-                if checks[names[l]].get()=='1':
-                    channel = channeldata[l][0:displaymax]
-                    ax1.plot(tplot,channel, label = names[l])
+            for i in range(0, numchannel):
+                if checks[names[i]].get()=='1':
+                    channel = channeldata[i][0:displaymax]
+                    ax1.plot(tplot,channel, label = names[i])
        
     #set up y axis legend                
     handles, labels = ax1.get_legend_handles_labels()
