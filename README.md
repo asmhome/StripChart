@@ -8,3 +8,4 @@ All four files should be in same directory.  Start StripChart first, then launch
 DataChannel.txt and ChartData.bin provide StripChart with the names for the channel to expect.  ChartData.bin provides the binary data for sender to send.
 Branch Created: Removed secondary y axis and added check buttons to hide/show channels (DO NOT MERGE)
 Uploaded revised StripChart with repaired 'rewind' and End Of Data behavior
+Add button to save chart frame to pdf file with timestamp
