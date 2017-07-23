@@ -8,6 +8,10 @@ import matplotlib.animation as animation
 import socket
 import struct
 import time
+import datetime
+
+#counter for screenshots
+shotcount = 0
 
 #End of Data Flag - Set to 0, if Set to 1 = No More Data Coming
 eodflag = '0'
@@ -36,6 +40,14 @@ zuum = 100
 
 
 #.....................Display Control Functions call by Buttons.............
+
+#save figure in file
+def screenshot():
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
+    shot = 'frame'+st+'.pdf'
+    fig.savefig(shot)
+    
 #rewind data function called by rewind button
 def rewind():
     global dmax
@@ -243,6 +255,9 @@ extentsb.pack(side = 'left',fill='both', expand=True, padx=4)
 row3 = Frame(root,height = 2, width = 4, background=bgkolor)
 row3.pack()
 
+#create and place rewind button
+screenshotb = Button(row3, text="Save Frame", command=screenshot, font=("Arial",9))
+screenshotb.pack(side = 'left')
 #create and place rewind button
 rewindb = Button(row3, text="|<", command=rewind, font=("Arial",9))
 rewindb.pack(side = 'left')
