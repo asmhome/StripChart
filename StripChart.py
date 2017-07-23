@@ -10,6 +10,8 @@ import struct
 import time
 import datetime
 
+messagetext =''
+
 #counter for screenshots
 shotcount = 0
 
@@ -43,6 +45,8 @@ zuum = 100
 
 #save figure in file
 def screenshot():
+    global messagetext
+    messagetext = "Saving Chart Frame..."
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
     shot = 'frame'+st+'.pdf'
@@ -55,6 +59,8 @@ def rewind():
     global displaymin
     global chartwidth
     global displaymax
+    global messagetext
+    messagetext = "Rewound first frame..."
     displayinc = 0
     displaymin = 0
     if dmax > chartwidth:
@@ -68,6 +74,8 @@ def fback():
     global displayinc
     global startdisplayinc
     global zuum
+    global messagetext
+    messagetext = "Moving Backward Fast..."
     displayinc = int(-10*startdisplayinc*100/zuum)
 
 #backward function
@@ -75,11 +83,15 @@ def back():
     global displayinc
     global startdisplayinc
     global zuum
+    global messagetext
+    messagetext = "Moving Backwards...."
     displayinc = int(-1*startdisplayinc*100/zuum)
    
 #stop function: freezes display of data and chart
 def stop():
     global displayinc
+    global messagetext
+    messagetext = "Strip Chart Stopped...."
     displayinc = 0
     
 #forward at normal increment 
@@ -87,6 +99,8 @@ def forward():
     global displayinc
     global startdisplayinc
     global zuum
+    global messagetext
+    messagetext = "Moving Forward...."
     displayinc = int(startdisplayinc*100/zuum)
         
 #fast forward
@@ -94,6 +108,8 @@ def fforward():
     global displayinc
     global startdisplayinc
     global zuum
+    global messagetext
+    messagetext = "Fast Forward...."
     displayinc = int(10*startdisplayinc*100/zuum)
 
 
@@ -106,6 +122,8 @@ def skipend():
     global startdisplayinc
     global zuum
     global dmax
+    global messagetext
+    messagetext = "Skip Forward to Current Time..."
     displayinc = int(startdisplayinc*100/zuum)
     displaymax = dmax
     displaymin = displaymax - chartwidth
@@ -118,6 +136,8 @@ def zoom():
     global initialchartwidth
     global zuum
     global displayinc
+    global messagetext
+    messagetext = "Zooming in +2X..."
     if chartwidth > 0.005 * initialchartwidth:
         chartwidth = chartwidth/2
         zuum = zuum * 2
@@ -130,6 +150,8 @@ def zoomout():
     global initialcartwidth
     global zuum
     global displayinc
+    global messagetext
+    messagetext = "Zooming out 1/2X...."
     chartwidth = chartwidth*2
     zuum  = int(zuum/2)
 
@@ -141,6 +163,8 @@ def extents():
     global initialchartwidth
     global displayinc
     global zuum
+    global messagetext
+    messagetext = "Reset Zoom to 1X....."
     chartwidth = initialchartwidth
     displayinc = startdisplayinc
     zuum = 100
@@ -152,6 +176,8 @@ def jumptof(en):
     global displaymax
     global dmax
     global tdata
+    global messagetext
+    
         
     content = entry.get()
     dhold = 0
@@ -165,6 +191,7 @@ def jumptof(en):
                 break
         displaymax = int(dhold + chartwidth/2)
         displayinc = 0
+        messagetext = "Jumping to "+str(midchart)+" ....."
         
     except ValueError:
         print "Not a float"
@@ -286,6 +313,11 @@ entry = Entry(row3, width = 10, font=("Arial",9))
 entry.pack(side = 'left')
 entry.bind('<Return>', jumptof)
 
+#define fourth frame for system messages
+row4 = Frame(root,height = 1, width = 60, background=bgkolor)
+row4.pack()
+mtext = Text(row4, width = 40, height = 1, background = bgkolor,font=("Arial",8))
+mtext.pack()
 
 
 #set text box size
@@ -317,8 +349,8 @@ dcount = 0
 dmax = 0
 displaymin = 0 #lowest value displayed on x-axis of chart.
 displaymax = 0 #highest value displayed on x-axis of chart.
-
-
+mcount = 0
+  
 def animate(i):
     #make some variables global
     global displayinc
@@ -336,7 +368,11 @@ def animate(i):
     global numchannel
     global dcount
     global eodflag
+    global messagetext
+    global mcount
 
+
+    
     #get next "dinc" data points
     #test for end of data flag
     if eodflag != '1':
@@ -347,6 +383,7 @@ def animate(i):
                 eodflag = '1'
                 s.close()
                 dinc = 0
+                messagetext = '>>>>REALTIME DATA ENDED<<<<<\n'
                 print 'eod recieved'
                 break
             num = numchannel+1
@@ -413,11 +450,18 @@ def animate(i):
             minstr = str(round(minchannel[i],2))
             wtext = 'Min: '+ minstr +' TOF: '+ tminstr+'\n'
             btext.insert(INSERT, wtext)
-    if eodflag == '1':
-        #Show EOD  
-        wtext = '>>>>REALTIME DATA ENDED<<<<<\n'
-        btext.insert(INSERT, wtext)
-    
+
+
+    #Update message window
+    #clear message window for next data set to be displayed
+    mtext.delete('1.0', END)
+    #this loop allow message to linger for reading with blocking other loops
+    if mcount <10:
+        mtext.insert(INSERT, messagetext)
+        mcount = mcount+1
+    else:
+        mcount = 0
+        messagetext =''
 
     #update box display        
     root.update()
