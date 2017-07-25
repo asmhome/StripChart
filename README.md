@@ -10,3 +10,4 @@ Branch Created: Removed secondary y axis and added check buttons to hide/show ch
 Uploaded revised StripChart with repaired 'rewind' and End Of Data behavior
 Add button to save chart frame to pdf file with timestamp
 Add message window to provide feedback to user when buttons are pushed
+Created Class version of StripChartClass.py
