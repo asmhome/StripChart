@@ -1,13 +1,12 @@
 # StripChart
-StripChart
-Initial Commit
-StripChart.py and other supporting files uploaded this morning
-Correct mis-spelled StripChart name.
-Running suggestions:
-All four files should be in same directory.  Start StripChart first, then launch DataSender.  If DataSender fails to open socket just run it again, it should connect.  This version of the sender has the 250 msec delay every 5000 data sets and it trashes some data not sent too.  You can comment out that section for smoother data flow.
-DataChannel.txt and ChartData.bin provide StripChart with the names for the channel to expect.  ChartData.bin provides the binary data for sender to send.
-Branch Created: Removed secondary y axis and added check buttons to hide/show channels (DO NOT MERGE)
-Uploaded revised StripChart with repaired 'rewind' and End Of Data behavior
-Add button to save chart frame to pdf file with timestamp
-Add message window to provide feedback to user when buttons are pushed
-Created Class version of StripChartClass.py
+Major Update Posted
+StripChart.py is a class.
+RunStripChart.py will use the StripChart.py class to build a sindle strip chart window
+DictionarySender.py is for simulation only.  It sends dictionary data using 'pickle' encoding.
+Note:  the dictionary data send MUST be ordered.
+
+A new version called StripChartSlider.py can be used to replace StripChart.py 
+It uses slider controls for chart speed and chart zoom function instead of buttons.
+A new version called RunStripChartSlider.py is included to run the new version
+
+DictionarySender.py can be used with either version
