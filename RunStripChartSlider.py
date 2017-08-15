@@ -1,7 +1,7 @@
-import StripChart
+import StripChartSlider
 #...............main program.............................
 #create instance of StripChart            
-chart1 = StripChart.StripChart()
+chart1 = StripChartSlider.StripChart()
 #open the port
 port = 8889
 chart1.opensock(port)

@@ -13,6 +13,9 @@ import pickle
 import collections
 
 class StripChart:
+    
+    #============================Setup and Initialization Section=============================================
+    
     def __init__(self):
         #...........DEMO ONLY.....text file with channel names
         self.filename = ''
@@ -125,59 +128,49 @@ class StripChart:
         #define second frame for zoom buttons
         self.row2 = Frame(self.root,height = 2, width = 4, background=self.bgkolor)
         self.row2.pack()
+        
+        #create chart zoom slider
+      
+        self.zoomslider =Scale(self.row2,from_=0.1, to=10, sliderlength = 10, showvalue=  0, resolution = 0.1,length = 400, label = "<IN-----------------------------------ZOOM------------------------------Out---Ext's>",orient = HORIZONTAL)
+        self.zoomslider.set(1)
+        self.zoomslider.pack(side='left')
 
-        #create zoom in button
-        self.zoomb = Button(self.row2, text="->In<-", command=self.zoom, font=("Arial",9))
-        #place zoom in button
-        self.zoomb.pack(side = 'left', fill='both', expand=True, padx=4)
-        #create zoom out button
-        self.zoomb = Button(self.row2, text="<-Out->", command=self.zoomout, font=("Arial",9))
-        #place zoom out button
-        self.zoomb.pack(side = 'left',fill='both', expand=True, padx=4)
-        #create zoom extents button
-        self.extentsb = Button(self.row2, text="|<-Limits->|", command=self.extents, font=("Arial",9))
-        #place zoom extents button
-        self.extentsb.pack(side = 'left',fill='both', expand=True, padx=4)
 
-        #define third frame for controls buttons
+        #define third frame for speed slider
         self.row3 = Frame(self.root,height = 2, width = 4, background=self.bgkolor)
         self.row3.pack()
+          
+        #create chart speed slider
+      
+        self.speedslider =Scale(self.row3,from_=-10, to =10, sliderlength = 10, showvalue= 0, resolution = 0.2,length = 400, label = "<Reverse-------------------------Chart Speed--------------------------Forward>",orient = HORIZONTAL)
+        self.speedslider.set(1)
+        self.speedslider.pack(side='left')
+   
+        
+        #define forth frame for control buttons
+        self.row4 = Frame(self.root,height = 1, width = 60, background=self.bgkolor)
+        self.row4.pack()
 
-        #create and place rewind button
-        self.screenshotb = Button(self.row3, text="Save Frame", command=self.screenshot, font=("Arial",9))
-        self.screenshotb.pack(side = 'left')
-        #create and place rewind button
-        self.rewindb = Button(self.row3, text="|<", command=self.rewind, font=("Arial",9))
-        self.rewindb.pack(side = 'left')
-        #create and place fast backward button
-        self.fbackb = Button(self.row3, text="<<", command=self.fback, font=("Arial",9))
-        self.fbackb.pack(side = 'left')
-        #create and place backward button
-        self.backb = Button(self.row3, text="<-", command=self.back, font=("Arial",9))
-        self.backb.pack(side = 'left')
+        #create and place screen shot button
+        self.screenshotb = Button(self.row4, text="Save Frame", command=self.screenshot, font=("Arial",9))
+        self.screenshotb.pack(side = 'left') 
+        
         #create and place stop button
-        self.stopb = Button(self.row3, text="STOP", command=self.stop, font=("Arial",9))
+        self.stopb = Button(self.row4, text="|------------STOP-------------|", command=self.stop, font=("Arial",9))
         self.stopb.pack(side = 'left')
-        #create and place forward button
-        self.forwardb = Button(self.row3, text="->", command=self.forward, font=("Arial",9))
-        self.forwardb.pack(side = 'left')
-        #create and place fast forward button
-        self.fforwardb = Button(self.row3, text=">>", command=self.fforward, font=("Arial",9))
-        self.fforwardb.pack(side = 'left')
-        #create and place skip to end button
-        self.skipendb = Button(self.row3, text=">|", command=self.skipend, font=("Arial",9))
-        self.skipendb.pack(side = 'left')
+        
         #create and place Jump to input box
-        self.jumplabel = Label(self.row3, text = "Jump TOF: ", font=("Arial",9))
+        self.jumplabel = Label(self.row4, text = "Jump TOF: ", font=("Arial",9))
         self.jumplabel.pack(side = 'left')
-        self.entry = Entry(self.row3, width = 10, font=("Arial",9))
+        self.entry = Entry(self.row4, width = 10, font=("Arial",9))
         self.entry.pack(side = 'left')
         self.entry.bind('<Return>', self.jumptof)
 
-        #define fourth frame for system messages
-        self.row4 = Frame(self.root,height = 1, width = 60, background=self.bgkolor)
-        self.row4.pack()
-        self.mtext = Text(self.row4, width = 40, height = 1, background = self.bgkolor,font=("Arial",8))
+        #define fifth frame for system messages
+        self.row5 = Frame(self.root,height = 1, width = 60, background=self.bgkolor)
+        self.row5.pack()
+        self.mtext = Text(self.row5, width = 65, height = 1, background = self.bgkolor,font=("Arial",8))
+        self.mtext.tag_configure("center", justify='center')
         self.mtext.pack()
 
 
@@ -223,90 +216,20 @@ class StripChart:
             
     #create plot file of chart..............
     def screenshot(self):
-            self.messagetext = "Saving Chart Frame..."
             ts = time.time()
             st = datetime.datetime.fromtimestamp(ts).strftime('%Y%m%d_%H%M%S')
             shot = 'frame'+st+'.pdf'
+            self.messagetext = "............Saving filename: "+shot
             self.fig.savefig(shot)
-
-    #rewind data function called by rewind button
-    def rewind(self):
-        self.messagetext = "Rewound first frame..."
-        self.displayinc = 0
-        self.displaymin = 0
-        if self.dmax > self.chartwidth:
-            self.displaymax = self.chartwidth
-        else:
-            self.displaymax = self.dmax
-          
-    #fast backward function
-    def fback(self):
-        self.messagetext = "Moving Backward Fast..."
-        self.displayinc = -int(10*self.startdisplayinc)
-
-    #backward function
-    def back(self):
-        self.messagetext = "Moving Backwards...."
-        self.displayinc =-int(1*self.startdisplayinc)
-       
+    
     #stop function: freezes display of data and chart
     def stop(self):
 
-        self.messagetext = "Strip Chart Stopped...."
+        
+        
+        self.messagetext = "......Chart Stopped..........."
         self.displayinc = 0
-        
-    #forward at normal increment 
-    def forward(self):
-
-        self.messagetext = "Moving Forward...."
-        self.displayinc = int(1*self.startdisplayinc)
-            
-    #fast forward
-    def fforward(self):
-
-        self.messagetext = "Fast Forward...."
-        self.displayinc = int(10*self.startdisplayinc)
-
-
-    #skip to realtime data position
-    def skipend(self):
-        self.messagetext = "Skip Forward to Current Time..."
-        self.displaymax = self.dmax
-        self.displaymin = self.displaymax - self.chartwidth
-        if self.displaymin <= 1:
-            self.displaymin = 1
-
-    #zoom 2x
-    def zoom(self):
-        self.messagetext = "Zooming in +2X..."
-        if self.chartwidth > 0.125*self.initialchartwidth:
-            self.chartwidth = self.chartwidth/2
-            
-            
-
-    #zoom 1/2x
-    def zoomout(self):
-        self.messagetext = "Zooming out 1/2X...."
-        self.chartwidth = self.chartwidth*2
-        if self.chartwidth>self.dmax:
-            self.messagetext = "Zoom Limits of Data."
-            self.displaymin = 0
-            self.chartwidth = self.dmax
-            self.displaymax = self.dmax
-
-            
-        
-     
-    #zoom extents
-    def extents(self):
-        self.messagetext = "Zoom Limits of Data."
-        self.displaymin = 0
-        self.chartwidth = self.dmax
-        self.displaymax = self.dmax
-        
-
-        
-        
+        self.speedslider.set(0)
 
     #jump to TOF
     def jumptof(self,en):
@@ -323,12 +246,13 @@ class StripChart:
                     break
             self.displaymax = int(self.dhold + self.chartwidth/2)
             self.displayinc = 0
-            self.messagetext = "Jumping to "+str(self.midchart)+" ....."
+            self.speedslider.set(0)
+            self.messagetext = "........Jumping to "+str(self.midchart)+" ....."
             
         except ValueError:
-            print "Not a float"
+            self.messagetext = "........Not Valid Input..........."
 
-    #====================End functions for buttons===============================
+    #========================MAIN LOOP ==========================================================
 
     def runanimation(self):
 
@@ -338,7 +262,7 @@ class StripChart:
         #Tkinter mainloop, require to show window
         self.root.mainloop()
 
-          
+    #===========================Animation Function ===========================================      
     #animation function....this is main looping function that fills window with data, chart with lines each animation frame
     def animate(self,i):
         #This section reads in data each frame.....stops reading when EOD is detected
@@ -356,8 +280,6 @@ class StripChart:
                     print 'eod recieved'
                     break
                 self.dict = pickle.loads(data)
-
-               
                 #TOF data 
                 self.tdata[self.dcount+i] = self.dict['TOF']
                 #reset current time
@@ -375,38 +297,65 @@ class StripChart:
                         if self.channeldata[n][self.dcount+i] > self.maxchannel[n]:
                             self.maxchannel[n] = self.channeldata[n][self.dcount+i]
                             self.tmaxchannel[n] = self.tdata[self.dcount+i]
-                #send string though port to keep port in sync            
                 self.conn.send(str(self.tmax))  
         self.dcount = self.dcount + self.dinc
-
-        
-        #move self.displayinc frames.  Note self.displayinc can be negative
+        self.sspeed = self.speedslider.get()
+        if (self.sspeed == 0) and (self.messagetext == ''):
+                self.messagetext = '...........Chart Stopped...........'
+        self.displayinc = int(float(self.startdisplayinc)*self.sspeed)
         self.displaymax = self.displaymax + self.displayinc
+
+
+        #=========Chart Adjustsments and Scaling================================
         
-        #check display values are valid    
-        if self.displaymax>self.dmax:
-            self.displaymax = self.dmax
-        self.displaymin = self.displaymax - self.chartwidth
-                
-        if self.dcount > 1:
-            if self.displaymin < 0:
+        self.szoom = self.zoomslider.get()
+        
+        if self.szoom > 9.2:
+            if self.displayinc <> 0:
+                self.displayinc = self.startdisplayinc
+                self.speedslider.set(1)
                 self.displaymin = 0
-       
-        if self.displaymax <= 0:
+                self.displaymax = self.dmax
+            if self.messagetext == '':
+                self.messagetext = '...........Zoomed Extents...........'
+            self.chartwidth = self.dmax
+        else:
+            self.chartwidth = int(self.szoom*float(self.initialchartwidth))
+
+        if self.chartwidth < 3:
+            self.chartwidth = 3
+
+        if (self.dcount > 1) and (self.displaymin < 0):
+            self.displaymin = 0
+
+        if (self.displaymax>self.dmax):
+            self.displaymax = self.dmax
+            self.speedslider.set(1)
+            self.displayinc = self.startdisplayinc
+            self.messagetext = '...........Chart Speed Adjusted..........'
+
+        if self.displaymax < 0:
             self.displaymax = 0
             self.displayinc = self.startdisplayinc
+            self.speedslider.set(1)
+            self.messagetext = '...........Chart Speed Adjusted..........'
 
+        self.displaymin = self.displaymax - self.chartwidth
+
+        
+        #=============Text Window Section =========================
         #Update text window
         #clear text window for next data set to be displayed
         self.btext.delete('1.0', END)
         self.b2text.delete('1.0', END)
 
+
         #show TOF
-        self.wtext = "Realtime TOF: "+str(round(self.tmax,2))+' msec \n'
+        self.wtext = 'Realtime TOF: '+str(round(self.tmax,2))+' msec \n'
         self.b2text.insert(INSERT, self.wtext)
        
         #value of end of x-axis  
-        self.wtext = "Chart Max: "+str(round(self.tdata[self.displaymax],2))+' msec \n'
+        self.wtext = 'Chart Max: '+str(round(self.tdata[self.displaymax],2))+' msec \n'
         self.btext.insert(INSERT, self.wtext)
 
         
@@ -437,17 +386,21 @@ class StripChart:
         #this loop allow message to linger for reading with blocking other loops
         if self.mcount <10:
             self.mtext.insert(INSERT, self.messagetext)
+            self.mtext.tag_add("center", 1.0, "end")
             self.mcount = self.mcount+1
         else:
             self.mcount = 0
-            self.messagetext =''
+            self.messagetext = ''
+            
 
         #update box display        
         self.root.update()
-         
+        
+        
+        #==============================Plotting Data Section =========================        
         #Update chart
         self.ax1.clear()
-        #ax2.clear()
+    
         if self.displaymax >= self.chartwidth:
                 tplot = self.tdata[self.displaymin:self.displaymax]
                 for i in range(0, self.numchannel):
