@@ -16,4 +16,4 @@ It uses slider controls for chart speed and chart zoom function instead of butto
 
 A new version called RunStripChartSlider.py is included to run the new version
 
-DictionarySender.py can be used with either version
+Note: DictionarySender.py can be used to send simulated data to either version 
